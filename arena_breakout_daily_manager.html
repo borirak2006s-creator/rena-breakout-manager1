@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#101722">
+<title>Arena Breakout · Daily Manager</title>
+<style>
+:root{color-scheme:dark;--bg:#0b111a;--panel:#141e2b;--panel2:#1a2736;--line:#2a3a4d;--text:#edf3fa;--muted:#9aabba;--accent:#e6b84b;--green:#55c58b;--yellow:#e6b84b;--red:#e87979}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(160deg,#111c29,#0b111a 48%);color:var(--text);font:15px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh}
+header{padding:calc(18px + env(safe-area-inset-top)) 18px 18px;background:#101925;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:3}
+.brand{display:flex;align-items:center;gap:11px}.mark{width:42px;height:42px;border-radius:12px;background:linear-gradient(145deg,#f0c65d,#a8751d);display:grid;place-items:center;color:#17130a;font-weight:900;font-size:18px}
+h1{font-size:18px;margin:0;letter-spacing:.2px}.sub{font-size:12px;color:var(--muted);margin-top:4px}
+main{max-width:900px;margin:auto;padding:17px 14px 40px}
+.notice{background:#292416;border:1px solid #62502a;color:#f3d994;border-radius:12px;padding:11px 13px;font-size:12px;line-height:1.5;margin-bottom:14px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:14px}.stat{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:12px}.stat strong{font-size:23px;display:block}.stat span{font-size:11px;color:var(--muted)}
+.progress{height:7px;background:#273444;border-radius:20px;overflow:hidden;margin-top:10px}.progress>i{display:block;height:100%;background:var(--green);width:0;transition:width .2s}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.toolbar input{flex:1;min-width:150px}
+input,select,textarea,button{font:inherit}input,select,textarea{background:#0e1722;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:11px;min-width:0}button{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--panel2);color:var(--text);font-weight:650;cursor:pointer}button.primary{background:var(--accent);color:#17130a;border-color:var(--accent)}button.danger{color:#ffaaaa;border-color:#754343}button:active{transform:scale(.98)}
+.sectionhead{display:flex;align-items:center;justify-content:space-between;margin:16px 2px 9px}.sectionhead h2{font-size:15px;margin:0}.sectionhead small{color:var(--muted)}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:9px}.account{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:12px;min-width:0}.account.done{border-color:#367b5c;background:linear-gradient(120deg,#14291f,var(--panel) 70%)}
+.cardtop{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}.num{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.5px}.pill{font-size:10px;border-radius:20px;padding:5px 8px;background:#263648;color:#c5d4e2;white-space:nowrap}.done .pill{background:#1e5139;color:#9ce6bd}
+.account input.name{width:100%;font-weight:700;margin-bottom:8px}.account input.note{width:100%;font-size:12px;margin-top:8px}.actions{display:flex;gap:7px}.actions button{flex:1;font-size:12px;padding:9px 5px}.actions .check{background:#1b4734;border-color:#367b5c;color:#b2f0cd}.actions .undo{background:#293342;color:#d5dfeb}
+.empty{color:var(--muted);text-align:center;padding:24px;display:none}
+footer{color:var(--muted);font-size:11px;text-align:center;padding:20px 8px}
+@media(max-width:520px){.cards{grid-template-columns:1fr}.stat{padding:10px}.stat strong{font-size:21px}.toolbar button{flex:1}}
+</style>
+</head>
+<body>
+<header><div class="brand"><div class="mark">AB</div><div><h1>ARENA BREAKOUT</h1><div class="sub">DAILY ACCOUNT MANAGER · 50 SLOTS</div></div></div></header>
+<main>
+<div class="notice">เครื่องมือนี้ใช้จดบันทึกและติดตามสถานะเท่านั้น ไม่ได้ล็อกอินหรือควบคุมเกมอัตโนมัติ <b>อย่าบันทึกรหัสผ่านหรือรหัสยืนยัน</b> ข้อมูลจะเก็บไว้ในเบราว์เซอร์บนอุปกรณ์นี้</div>
+<div class="stats">
+ <div class="stat"><strong id="total">50</strong><span>บัญชีทั้งหมด</span></div>
+ <div class="stat"><strong id="completed">0</strong><span>รับของแล้ววันนี้</span></div>
+ <div class="stat"><strong id="remaining">50</strong><span>ยังไม่เสร็จ</span></div>
+</div>
+<div class="progress"><i id="bar"></i></div>
+<div class="toolbar">
+ <input id="search" type="search" placeholder="ค้นหาชื่อบัญชีหรือหมายเหตุ…" aria-label="ค้นหา">
+ <select id="filter" aria-label="กรองสถานะ"><option value="all">ทุกสถานะ</option><option value="pending">ยังไม่รับ</option><option value="done">รับแล้ว</option></select>
+</div>
+<div class="sectionhead"><h2>รายการบัญชี</h2><small id="dayLabel"></small></div>
+<div id="cards" class="cards"></div><div id="empty" class="empty">ไม่พบบัญชีที่ตรงกับการค้นหา</div>
+<div class="toolbar" style="margin-top:16px">
+ <button id="export">ส่งออกข้อมูลสำรอง</button>
+ <button id="importBtn">นำเข้าข้อมูล</button>
+ <button id="reset" class="danger">รีเซ็ตสถานะวันนี้</button>
+ <input id="file" type="file" accept="application/json,.json" hidden>
+</div>
+<footer>ข้อมูลไม่ซิงก์ข้ามอุปกรณ์ · สำรองข้อมูลเป็นระยะ · รีเซ็ตสถานะจะไม่ลบบัญชีหรือหมายเหตุ</footer>
+</main>
+<script>
+(() => {
+ const KEY='ab_daily_manager_v1';
+ const today=()=>{const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')};
+ const blank=()=>({day:today(),accounts:Array.from({length:50},(_,i)=>({id:i+1,name:`บัญชี ${String(i+1).padStart(2,'0')}`,note:'',done:false}))});
+ let data;
+ try{data=JSON.parse(localStorage.getItem(KEY))||blank();}catch(e){data=blank();}
+ if(!Array.isArray(data.accounts))data=blank();
+ while(data.accounts.length<50)data.accounts.push({id:data.accounts.length+1,name:`บัญชี ${String(data.accounts.length+1).padStart(2,'0')}`,note:'',done:false});
+ data.accounts=data.accounts.slice(0,50);
+ if(data.day!==today()){data.day=today();data.accounts.forEach(a=>a.done=false);save();}
+ const $=id=>document.getElementById(id);
+ function save(){localStorage.setItem(KEY,JSON.stringify(data));}
+ function stats(){let n=data.accounts.filter(a=>a.done).length;$('total').textContent=data.accounts.length;$('completed').textContent=n;$('remaining').textContent=data.accounts.length-n;$('bar').style.width=(n/data.accounts.length*100)+'%';$('dayLabel').textContent='วันที่ '+new Date().toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'});}
+ function render(){
+  stats();const q=$('search').value.toLowerCase();const f=$('filter').value;const root=$('cards');root.innerHTML='';
+  const items=data.accounts.filter(a=>(f==='all'||(f==='done'?a.done:!a.done))&&(`${a.name} ${a.note}`).toLowerCase().includes(q));
+  $('empty').style.display=items.length?'none':'block';
+  items.forEach(a=>{
+   const card=document.createElement('article');card.className='account'+(a.done?' done':'');
+   const top=document.createElement('div');top.className='cardtop';
+   const num=document.createElement('span');num.className='num';num.textContent='ACCOUNT '+String(a.id).padStart(2,'0');
+   const pill=document.createElement('span');pill.className='pill';pill.textContent=a.done?'✓ รับของแล้ว':'ยังไม่รับ';top.append(num,pill);
+   const name=document.createElement('input');name.className='name';name.value=a.name;name.maxLength=40;name.setAttribute('aria-label','ชื่อบัญชี '+a.id);name.addEventListener('change',()=>{a.name=name.value.trim()||`บัญชี ${String(a.id).padStart(2,'0')}`;save();render();});
+   const actions=document.createElement('div');actions.className='actions';
+   const toggle=document.createElement('button');toggle.className=a.done?'undo':'check';toggle.textContent=a.done?'ยกเลิกสถานะ':'✓ รับของแล้ว';toggle.addEventListener('click',()=>{a.done=!a.done;save();render();});
+   const clear=document.createElement('button');clear.textContent='ล้างหมายเหตุ';clear.addEventListener('click',()=>{a.note='';save();render();});
+   const note=document.createElement('input');note.className='note';note.placeholder='หมายเหตุ (ไม่ใส่รหัสผ่าน)';note.value=a.note||'';note.maxLength=100;note.setAttribute('aria-label','หมายเหตุบัญชี '+a.id);note.addEventListener('change',()=>{a.note=note.value;save();});
+   actions.append(toggle,clear);card.append(top,name,actions,note);root.append(card);
+  });
+ }
+ $('search').addEventListener('input',render);$('filter').addEventListener('change',render);
+ $('reset').addEventListener('click',()=>{if(confirm('รีเซ็ตสถานะรับของทั้ง 50 บัญชีสำหรับวันนี้ใช่ไหม?')){data.accounts.forEach(a=>a.done=false);data.day=today();save();render();}});
+ $('export').addEventListener('click',()=>{const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download='arena-breakout-manager-backup.json';link.click();URL.revokeObjectURL(url);});
+ $('importBtn').addEventListener('click',()=>$('file').click());
+ $('file').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{const obj=JSON.parse(await file.text());if(!Array.isArray(obj.accounts))throw Error();if(!confirm('นำเข้าข้อมูลนี้และแทนที่ข้อมูลปัจจุบันใช่ไหม?'))return;data={day:today(),accounts:Array.from({length:50},(_,i)=>{const a=obj.accounts[i]||{};return{id:i+1,name:String(a.name||`บัญชี ${String(i+1).padStart(2,'0')}`),note:String(a.note||''),done:!!a.done}})};save();render();alert('นำเข้าข้อมูลเรียบร้อย');}catch(err){alert('ไฟล์ไม่ถูกต้องหรืออ่านไม่ได้');}e.target.value='';});
+ render();
+})();
+</script>
+</body></html>
